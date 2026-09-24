@@ -1,13 +1,20 @@
 pipeline {
     agent {
-    docker {
-        image 'node20-docker'
+        docker {
+            image 'node20-docker'
+
+            args '''
+                --network aws-elastic-beanstalk-express-js-sample_jenkins_network
+                -v jenkins-docker-certs:/certs/client:ro
+                -e DOCKER_HOST=tcp://docker:2376
+                -e DOCKER_CERT_PATH=/certs/client
+                -e DOCKER_TLS_VERIFY=1
+            '''
+        }
     }
-}
 
     environment {
         IMAGE_NAME = 'aws-node-app'
-        DOCKER_REGISTRY = 'docker.io'
     }
 
     stages {
@@ -26,13 +33,15 @@ pipeline {
 
         stage('Unit Tests') {
             steps {
-                sh '''
-                    if npm run | grep -q " test"; then
-                        npm test
-                    else
-                        echo "No unit tests configured for this project"
-                    fi
-                '''
+                script {
+                    def packageJson = readJSON file: 'package.json'
+
+                    if (packageJson.scripts?.test) {
+                        sh 'npm test'
+                    } else {
+                        echo 'No unit tests configured for this project'
+                    }
+                }
             }
         }
 
@@ -46,9 +55,13 @@ pipeline {
                     )
                 ]) {
                     sh '''
-                        docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} .
+                        docker version
 
-                        docker tag ${IMAGE_NAME}:${BUILD_NUMBER} \
+                        docker build \
+                            -t ${IMAGE_NAME}:${BUILD_NUMBER} .
+
+                        docker tag \
+                            ${IMAGE_NAME}:${BUILD_NUMBER} \
                             ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${BUILD_NUMBER}
                     '''
                 }
