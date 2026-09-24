@@ -1,7 +1,9 @@
+```groovy
 pipeline {
     agent {
         docker {
             image 'node:16'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
@@ -25,17 +27,33 @@ pipeline {
         }
 
         stage('Unit Tests') {
-    steps {
-        sh 'echo "No unit tests configured for this project"'
-    }
-  }
+            steps {
+                sh '''
+                    if npm run | grep -q " test"; then
+                        npm test
+                    else
+                        echo "No unit tests configured for this project"
+                    fi
+                '''
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                    docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} .
-                    docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${BUILD_NUMBER}
-                '''
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKERHUB_USERNAME',
+                        passwordVariable: 'DOCKERHUB_PASSWORD'
+                    )
+                ]) {
+                    sh '''
+                        docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} .
+
+                        docker tag ${IMAGE_NAME}:${BUILD_NUMBER} \
+                            ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${BUILD_NUMBER}
+                    '''
+                }
             }
         }
 
@@ -53,12 +71,15 @@ pipeline {
                             -u "$DOCKERHUB_USERNAME" \
                             --password-stdin
 
-                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${BUILD_NUMBER}
+                        docker push \
+                            ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${BUILD_NUMBER}
 
-                        docker tag ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${BUILD_NUMBER} \
+                        docker tag \
+                            ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${BUILD_NUMBER} \
                             ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
 
-                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+                        docker push \
+                            ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
 
                         docker logout
                     '''
@@ -81,3 +102,4 @@ pipeline {
         }
     }
 }
+```
