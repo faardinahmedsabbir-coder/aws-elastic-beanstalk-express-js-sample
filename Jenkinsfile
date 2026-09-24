@@ -1,10 +1,9 @@
 pipeline {
     agent {
-        docker {
-            image 'node:16'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
+    docker {
+        image 'node20-docker'
     }
+}
 
     environment {
         IMAGE_NAME = 'aws-node-app'
