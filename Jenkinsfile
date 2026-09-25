@@ -2,16 +2,19 @@ pipeline {
   agent {
     docker {
         image 'node20-docker'
-        args '-v aws-elastic-beanstalk-express-js-sample_jenkins_docker_certs:/certs/client:ro'
+        args '''
+            --network aws-elastic-beanstalk-express-js-sample_jenkins_network
+            -v aws-elastic-beanstalk-express-js-sample_jenkins_docker_certs:/certs/client:ro
+            -e DOCKER_HOST=tcp://docker:2376
+            -e DOCKER_CERT_PATH=/certs/client
+            -e DOCKER_TLS_VERIFY=1
+        '''
     }
 }
 
     environment {
     IMAGE_NAME = 'aws-node-app'
     DOCKER_REGISTRY = 'docker.io'
-    DOCKER_HOST = 'tcp://docker:2376'
-    DOCKER_CERT_PATH = '/certs/client'
-    DOCKER_TLS_VERIFY = '1'
 }
 
     stages {
