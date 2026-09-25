@@ -72,6 +72,12 @@ pipeline {
             }
         }
 
+stage('Archive Artifacts') {
+    steps {
+        archiveArtifacts artifacts: 'Jenkinsfile, package.json', fingerprint: true
+    }
+}
+
         stage('Push Docker Image') {
             steps {
                 withCredentials([
