@@ -31,18 +31,21 @@ pipeline {
         }
 
         stage('Unit Tests') {
-            steps {
-                script {
-                    def packageJson = readJSON file: 'package.json'
+    steps {
+        script {
+            def hasTestScript = sh(
+                script: "node -e \"const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)\"",
+                returnStatus: true
+            )
 
-                    if (packageJson.scripts?.test) {
-                        sh 'npm test'
-                    } else {
-                        echo 'No unit tests configured for this project'
-                    }
-                }
+            if (hasTestScript == 0) {
+                sh 'npm test'
+            } else {
+                echo 'No test script found in package.json. Skipping unit tests.'
             }
         }
+    }
+}
 
         stage('Build Docker Image') {
             steps {
