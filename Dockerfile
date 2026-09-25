@@ -1,34 +1,13 @@
-pipeline {
-    agent {
-        docker {
-            image 'node:16'
-        }
-    }
+FROM node:20-alpine
 
-    stages {
+WORKDIR /app
 
-        stage('Install Dependencies') {
-            steps {
-                sh 'npm ci'
-            }
-        }
+COPY package*.json ./
 
-        stage('Security Scan') {
-            steps {
-                sh 'npm audit --audit-level=high'
-            }
-        }
+RUN npm ci --omit=dev
 
-        stage('Unit Tests') {
-            steps {
-                sh 'npm test'
-            }
-        }
+COPY . .
 
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t aws-node-app:latest .'
-            }
-        }
-    }
-}
+EXPOSE 8080
+
+CMD ["npm", "start"]
