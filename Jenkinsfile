@@ -7,8 +7,12 @@ pipeline {
 }
 
     environment {
-        IMAGE_NAME = 'aws-node-app'
-    }
+    IMAGE_NAME = 'aws-node-app'
+    DOCKER_REGISTRY = 'docker.io'
+    DOCKER_HOST = 'tcp://docker:2376'
+    DOCKER_CERT_PATH = '/certs/client'
+    DOCKER_TLS_VERIFY = '1'
+}
 
     stages {
 
