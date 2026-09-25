@@ -1,14 +1,8 @@
 pipeline {
-   agent {
+  agent {
     docker {
         image 'node20-docker'
-        args '''
-            --network aws-elastic-beanstalk-express-js-sample_jenkins_network
-            -v aws-elastic-beanstalk-express-js-sample_jenkins_docker_certs:/certs/client:ro
-            -e DOCKER_HOST=tcp://docker:2376
-            -e DOCKER_CERT_PATH=/certs/client
-            -e DOCKER_TLS_VERIFY=1
-        '''
+        args '-v aws-elastic-beanstalk-express-js-sample_jenkins_docker_certs:/certs/client:ro'
     }
 }
 
